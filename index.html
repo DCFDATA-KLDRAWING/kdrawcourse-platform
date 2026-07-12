@@ -1,14 +1,34 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/kdrawcourse-platform/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="https://lh3.googleusercontent.com/d/1Non2p5IUFcBtKWqq0P8LulQo-Df83ivk" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>kdrawcourse-platform</title>
+    <title>KDrawCourse 課程平台</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/kdrawcourse-platform/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    
+    <!-- iOS Support -->
+    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1Non2p5IUFcBtKWqq0P8LulQo-Df83ivk" />
+    <meta name="apple-mobile-web-app-status-bar" content="#0f172a" />
     <script type="module" crossorigin src="/kdrawcourse-platform/assets/index-BwCO66wy.js"></script>
     <link rel="stylesheet" crossorigin href="/kdrawcourse-platform/assets/index-BarsmeqJ.css">
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // 在這個簡化版本中，我們先註冊一個空的 Service Worker，以滿足 PWA 的基本安裝條件
+          navigator.serviceWorker.register('sw.js').then(registration => {
+            console.log('SW registered: ', registration);
+          }).catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+        });
+      }
+    </script>
   </body>
 </html>
