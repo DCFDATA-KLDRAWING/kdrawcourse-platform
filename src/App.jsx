@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PlayCircle, Lock, BookOpen, LogOut, MonitorPlay, ChevronLeft, ListVideo, Play, Settings, Users, ShieldCheck, ToggleRight, ToggleLeft } from 'lucide-react';
-
-// === Firebase 雲端資料庫套件 ===
+// === Firebase 雲端資料套件 ===
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc } from "firebase/firestore";
-
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "firebase/firestore";
 // === 你的 Firebase 專屬鑰匙 ===
 const firebaseConfig = {
 apiKey: "AIzaSyCkelvOrhhuin1VlKhjihJROlvuzLdqN_c",
@@ -15,136 +13,111 @@ storageBucket: "kdrawcourse.firebasestorage.app",
 messagingSenderId: "245972957587",
 appId: "1:245972957587:web:7d110afe9a5e5dc64e1066"
 };
-
 // 啟動 Firebase 連線
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
-
 // ==========================================
 // 👑 老闆專屬設定區
 // ==========================================
 const ADMIN_EMAIL = "ajwu1688@gmail.com";
-
 // 課程資料庫
-const COURSES_DB = [
-{
-id: 'course_kline_1',
-title: '粗細轉折的奧義',
-description: '從粗細折線工具介紹到多空架構的完整解析，掌握價格波動強弱。',
-thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=400&h=250',
-chapters: [
-{
-id: 'ch_1',
-title: '單元一：粗細折線畫線工具介紹及定義',
-lessons: [
-{ id: 'lesson_1_1', title: 'K線粗細轉折的奧義 (工具介紹、運用定法)', duration: '影片 1', videoEmbedId: 'jx_JT0mFIMw' }
-]
-},
-{
-id: 'ch_2',
-title: '單元二：細折箱的取法原則與粗折ABC法則',
-lessons: [
-{ id: 'lesson_2_1', title: '細折箱取箱解說及運用', duration: '影片 1', videoEmbedId: 'evzclVHlSsY' },
-{ id: 'lesson_2_2', title: '粗折abc法則應用', duration: '影片 2', videoEmbedId: '9PRAOQCDnsY' }
-]
-},
-{
-id: 'ch_3',
-title: '單元三：粗折多空架構及運用',
-lessons: [
-{ id: 'lesson_3_1', title: '粗折架構運用 & 價格波動強弱分辨', duration: '影片 1', videoEmbedId: '37gNiZsGxoA' },
-{ id: 'lesson_3_2', title: '如何快速選圖畫粗細折？', duration: '影片 2', videoEmbedId: 'Ob2YiSKCekA' },
-{ id: 'lesson_3_3', title: '粗細折應用/強勢波段', duration: '影片 3', videoEmbedId: '6ji2lHfmQgU' }
-]
-}
-]
-},
-{
-id: 'course_tankey_2',
-title: '轉折天機',
-description: '從趨勢定法到天機模型速選，掌握主力籌碼與隱形天機的實戰選股 SOP。',
-thumbnail: 'https://file.vidhubfile.com/imgtok/post/fAXcGME/f_001.jpg',
-chapters: [
-{
-id: 'tankey_ch_1',
-title: '單元一：轉折天機完整課程',
-lessons: [
-{ id: 't_lesson_1', title: '轉折天機', duration: '影片 1', videoEmbedId: '_eQjZ1XQA4g' },
-{ id: 't_lesson_2', title: '天機模型速選法', duration: '影片 2', videoEmbedId: 'tu6BW8luOgY' },
-{ id: 't_lesson_3', title: '轉折天機-趨勢定法', duration: '影片 3', videoEmbedId: 'cM5eFbJsyz8' },
-{ id: 't_lesson_4', title: '轉折天機-模型密碼', duration: '影片 4', videoEmbedId: 'QqwPQWPKa1w' },
-{ id: 't_lesson_5', title: '轉折天機-要訣應用1130', duration: '影片 5', videoEmbedId: 'W5qYaJf0QBg' },
-{ id: 't_lesson_6', title: '轉折天機-要訣應用1202', duration: '影片 6', videoEmbedId: '4HKK5wEi7rw' },
-{ id: 't_lesson_7', title: '轉折天機-主力折磨圖', duration: '影片 7', videoEmbedId: 'eRWXg8hp0DI' },
-{ id: 't_lesson_8', title: '轉折天機-隱形天機', duration: '影片 8', videoEmbedId: 'r13PWatiw0A' },
-{ id: 't_lesson_9', title: '轉折天機-速選時間可以這樣做', duration: '影片 9', videoEmbedId: 'oztEHayQLbM' },
-{ id: 't_lesson_10', title: '轉折天機-天機模型的選股SOP', duration: '影片 10', videoEmbedId: 'WXAkh782_i0' }
-]
-}
-]
-}
-];
-
+const COURSES_DB =
+}, { id: 'ch_2', title: '單元二：細折箱的取法原則與粗折ABC法則', lessons:
+} ] }, { id: 'course_tankey_2', title: '轉折天機', description: '從趨勢定法到天機模型速選，掌握主力籌碼與隱形天機的實戰選股 SOP。', thumbnail: 'https://file.vidhubfile.com/imgtok/post/fAXcGME/f_001.jpg', chapters:
+} ] } ];
 export default function App() {
-const [isInitializing, setIsInitializing] = useState(true);
-const [isLoggedIn, setIsLoggedIn] = useState(false);
-const [user, setUser] = useState(null);
-const [isAdmin, setIsAdmin] = useState(false);
-const [currentView, setCurrentView] = useState('home');
-const [viewingCourse, setViewingCourse] = useState(null);
-const [currentLesson, setCurrentLesson] = useState(null);
-const [studentsList, setStudentsList] = useState([]);
-
-// 偵測是否使用 LINE 等 APP 內建瀏覽器
+const
+= useState(true);
+const
+= useState(false);
+const
+= useState(null);
+const
+= useState(false);
+const
+= useState('home');
+const
+= useState(null);
+const
+= useState(null);
+const
+= useState(
+);
+const
+= useState({ isLive: false, videoId: '', title: 'KDraw 專屬直播' });
+const
+= useState({ isLive: false, videoId: '', title: 'KDraw 專屬直播' });
+// 偵測是否使用 APP 內建瀏覽器
 const isAppBrowser = /Line|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
-
 useEffect(() => {
-const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+// 監聽登入狀態
+const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+try {
 if (firebaseUser) {
 const userRef = doc(db, "users", firebaseUser.uid);
 const userSnap = await getDoc(userRef);
 let userData;
+      if (userSnap.exists()) {
+        userData = userSnap.data();
+      } else {
+        userData = {
+          name: firebaseUser.displayName || '無名學生',
+          email: firebaseUser.email,
+          purchasedCourses: [] 
+        };
+        await setDoc(userRef, userData);
 
-    if (userSnap.exists()) {
-      userData = userSnap.data();
+        // Telegram 新學員通知
+        const telegramToken = "8858814911:AAFuLDOcZ3v7O9GFgyUanzbNcS8v6LZO5J4";
+        const chatId = "7151457316";
+        const message = `🚨 報告老闆！有新學員登入平台：\n\n👤 名字：${userData.name}\n✉️ 信箱：${userData.email}\n\n請記得至後台確認是否需開通權限！`;
+        
+        fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message })
+        }).catch(e => console.log(e));
+      }
+
+      setUser({ id: firebaseUser.uid, ...userData });
+      setIsAdmin(firebaseUser.email === ADMIN_EMAIL);
+      setIsLoggedIn(true);
     } else {
-      userData = {
-        name: firebaseUser.displayName || '無名學生',
-        email: firebaseUser.email,
-        purchasedCourses: [] 
-      };
-      await setDoc(userRef, userData);
-
-      // ======== 🚀 Telegram 新學員通知 ========
-      const telegramToken = "8858814911:AAFuLDOcZ3v7O9GFgyUanzbNcS8v6LZO5J4";
-      const chatId = "7151457316";
-      const message = `🚨 報告老闆！有新學員登入平台：\n\n👤 名字：${userData.name}\n✉️ 信箱：${userData.email}\n\n請記得至後台確認是否需開通權限！`;
-      
-      fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: message })
-      }).catch(error => console.error("Telegram 發送失敗", error));
+      setUser(null);
+      setIsLoggedIn(false);
+      setIsAdmin(false);
     }
-
-    setUser({ id: firebaseUser.uid, ...userData });
-    setIsAdmin(firebaseUser.email === ADMIN_EMAIL);
-    setIsLoggedIn(true);
-  } else {
-    setUser(null);
-    setIsLoggedIn(false);
-    setIsAdmin(false);
+  } catch (error) {
+    console.error("系統登入發生錯誤：", error);
+  } finally {
+    setIsInitializing(false);
   }
-  setIsInitializing(false);
 });
 
-return () => unsubscribe();
+// 🔴 監聽全站「直播室」狀態
+const unsubscribeLive = onSnapshot(doc(db, "settings", "liveRoom"), (docSnap) => {
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    setLiveSettings(data);
+    setEditLiveSettings(data);
+  } else {
+    const defaultSettings = { isLive: false, videoId: '', title: 'KDraw 專屬直播' };
+    setLiveSettings(defaultSettings);
+    setEditLiveSettings(defaultSettings);
+  }
+});
+
+return () => {
+  unsubscribeAuth();
+  unsubscribeLive();
+};
 
 
-}, []);
 
+},
+);
 const handleGoogleLogin = async () => {
 try {
 await signInWithPopup(auth, googleProvider);
@@ -152,204 +125,246 @@ await signInWithPopup(auth, googleProvider);
 console.error("登入失敗:", error);
 }
 };
-
 const handleLogout = async () => {
 await signOut(auth);
 setViewingCourse(null);
 setCurrentLesson(null);
 setCurrentView('home');
 };
-
+// 抓取學生名單
 useEffect(() => {
 if (isAdmin && currentView === 'admin') {
 const fetchStudents = async () => {
 const querySnapshot = await getDocs(collection(db, "users"));
-const students = [];
-querySnapshot.forEach((doc) => {
-students.push({ id: doc.id, ...doc.data() });
-});
+const students =
+;
+querySnapshot.forEach((doc) => students.push({ id: doc.id, ...doc.data() }));
 setStudentsList(students);
 };
 fetchStudents();
 }
-}, [isAdmin, currentView]);
-
+},
+);
+// 開關學生權限
 const toggleStudentCourse = async (studentId, courseId) => {
 const student = studentsList.find(s => s.id === studentId);
 const hasCourse = student.purchasedCourses.includes(courseId);
+const newPurchased = hasCourse
+? student.purchasedCourses.filter(id => id !== courseId)
+:
+;
+setStudentsList(prevList => prevList.map(s => s.id === studentId ? { ...s, purchasedCourses: newPurchased } : s));
+await updateDoc(doc(db, "users", studentId), { purchasedCourses: newPurchased });
 
-const newPurchased = hasCourse 
-  ? student.purchasedCourses.filter(id => id !== courseId) 
-  : [...student.purchasedCourses, courseId]; 
-
-setStudentsList(prevList => 
-  prevList.map(s => s.id === studentId ? { ...s, purchasedCourses: newPurchased } : s)
-);
-
-await updateDoc(doc(db, "users", studentId), {
-  purchasedCourses: newPurchased
-});
 
 
 };
-
-const hasPurchased = (courseId) => {
-return user?.purchasedCourses.includes(courseId);
+// 🔴 更新直播設定至資料庫
+const handleUpdateLiveSettings = async (newSettings) => {
+try {
+await setDoc(doc(db, "settings", "liveRoom"), newSettings, { merge: true });
+alert(newSettings.isLive ? "🔴 直播已發佈！學生端將立刻收到紅燈通知！" : "⚫ 直播已關閉。");
+} catch (error) {
+console.error("更新直播設定失敗:", error);
+alert("更新失敗，請檢查資料庫連線。");
+}
 };
-
+const hasPurchased = (courseId) => user?.purchasedCourses.includes(courseId);
 const handleEnterCourse = (course) => {
 if (hasPurchased(course.id) || isAdmin) {
 setViewingCourse(course);
-if (course.chapters.length > 0 && course.chapters[0].lessons.length > 0) {
-setCurrentLesson(course.chapters[0].lessons[0]);
+if (course.chapters.length > 0 && course.chapters
+.lessons.length > 0) {
+setCurrentLesson(course.chapters
+.lessons
+);
 }
 setCurrentView('course');
 }
 };
-
 if (isInitializing) {
 return (
-
-
 系統連線中...
-
 );
 }
-
 if (!isLoggedIn) {
 return (
-
-
-
-
-
-
 KDrawCourse 課程
 請使用 Google 帳號登入系統
-
-
-      <div className="space-y-4 mt-8">
-        {isAppBrowser ? (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-5 rounded-xl text-sm text-left shadow-sm">
-            <p className="font-bold flex items-center gap-2 mb-2 text-base text-amber-900">
-              <span className="text-xl">⚠️</span> 無法在目前的視窗登入
-            </p>
-            <p className="mb-3 leading-relaxed">Google 系統為了保護您的密碼安全，禁止在 LINE 或 FB 內建的視窗中直接登入。</p>
-            <div className="font-bold bg-amber-200 p-3 rounded-lg text-amber-900 text-center leading-relaxed">
-              👉 請點擊右上角 <span className="text-lg">⠇</span> 或右下角 <span className="text-lg">⋯</span><br/>
-              選擇「以預設瀏覽器開啟」<br/>
-              或「在 Safari / Chrome 開啟」
-            </div>
-          </div>
-        ) : (
-          <button 
-            onClick={handleGoogleLogin}
-            className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3.5 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-3"
-          >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5"/>
-            <span className="text-base">使用 Google 帳號登入</span>
-          </button>
-        )}
-      </div>
-    </div>
-  </div>
+{isAppBrowser ? (
+⚠️ 無法在目前的視窗登入
+Google 系統為了保護您的密碼安全，禁止在 LINE 或 FB 內建的視窗中直接登入。
+👉 請點擊右上角 ⠇ 或右下角 ⋯
+選擇「以預設瀏覽器開啟」
+或「在 Safari / Chrome 開啟」
+) : (
+使用 Google 帳號登入
+)}
 );
-
-
 }
-
 return (
-
-
-
-<div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}>
-
-
-
 KDrawCourse
+        <div className="flex items-center gap-1 sm:gap-2 md:border-l md:border-slate-700 md:pl-6">
+          <button onClick={() => setCurrentView('home')} className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-colors text-sm sm:text-base font-medium ${currentView === 'home' || currentView === 'course' ? 'text-white bg-slate-800' : 'text-gray-400 hover:text-white hover:bg-slate-800'}`}>
+            <BookOpen size={18} /> <span className="hidden sm:inline">我的課程</span>
+          </button>
+          <button onClick={() => setCurrentView('live')} className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-colors text-sm sm:text-base font-medium ${currentView === 'live' ? 'text-white bg-red-900/40 border border-red-500/30' : 'text-gray-400 hover:text-red-400 hover:bg-slate-800'}`}>
+            <MonitorPlay size={18} className={liveSettings.isLive ? "text-red-500" : ""} /> 
+            <span className="hidden sm:inline">專屬直播</span>
+            {liveSettings.isLive && <span className="relative flex h-2.5 w-2.5 ml-0.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span></span>}
+          </button>
+        </div>
+      </div>
 
-
-
-{user.name} {isAdmin && 管理員}
-
-
+      <div className="flex items-center gap-3 sm:gap-4 text-sm font-medium">
+        <span className="text-gray-300 hidden lg:inline-block">
+          {user.name} {isAdmin && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded ml-2">管理員</span>}
+        </span>
         {isAdmin && currentView !== 'admin' && (
-          <button onClick={() => setCurrentView('admin')} className="bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-1 transition-colors px-3 py-1.5 rounded-md shadow-sm">
-            <Settings size={16} /> 後台管理
+          <button onClick={() => setCurrentView('admin')} className="bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-1 transition-colors px-2 sm:px-3 py-1.5 rounded-md shadow-sm">
+            <Settings size={16} /> <span className="hidden sm:inline">後台</span>
           </button>
         )}
-
         {isAdmin && currentView === 'admin' && (
-          <button onClick={() => setCurrentView('home')} className="bg-slate-700 hover:bg-slate-600 text-white flex items-center gap-1 transition-colors px-3 py-1.5 rounded-md shadow-sm">
+          <button onClick={() => setCurrentView('home')} className="bg-slate-700 hover:bg-slate-600 text-white flex items-center gap-1 transition-colors px-2 sm:px-3 py-1.5 rounded-md shadow-sm">
              返回前台
           </button>
         )}
-
-        <button onClick={handleLogout} className="text-gray-300 hover:text-white flex items-center gap-1 transition-colors px-3 py-1.5 rounded-md hover:bg-slate-800 border border-slate-700">
-          <LogOut size={16} /> 登出
+        <button onClick={handleLogout} className="text-gray-300 hover:text-white flex items-center gap-1 transition-colors px-2 sm:px-3 py-1.5 rounded-md hover:bg-slate-800 border border-slate-700">
+          <LogOut size={16} /> <span className="hidden sm:inline">登出</span>
         </button>
       </div>
     </div>
   </nav>
 
   {currentView === 'admin' && isAdmin && (
+    <main className="flex-grow max-w-6xl mx-auto w-full px-4 py-8 space-y-8">
+      <section>
+        <div className="mb-4 border-b border-gray-200 pb-2">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <MonitorPlay className="text-red-600" /> 遠端直播控制台
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">在這裡設定 YouTube 直播連結，學生端會即時自動切換！</p>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row gap-6">
+           <div className="flex-1 space-y-4">
+             <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">1. 直播主題名稱</label>
+               <input type="text" value={editLiveSettings.title} onChange={e => setEditLiveSettings({...editLiveSettings, title: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="例如：本週大盤解析與 QA" />
+             </div>
+             <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">2. YouTube 影片 ID (v=後面的代碼)</label>
+               <input type="text" value={editLiveSettings.videoId} onChange={e => setEditLiveSettings({...editLiveSettings, videoId: e.target.value})} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 outline-none font-mono" placeholder="例如: jx_JT0mFIMw" />
+               <p className="text-xs text-gray-500 mt-1">若網址為 youtube.com/watch?v=<span className="font-bold text-red-500">abcd123</span>，請填入 abcd123</p>
+             </div>
+           </div>
+           <div className="flex-1 bg-slate-50 p-6 rounded-lg border border-slate-200 flex flex-col justify-center items-center text-center">
+              <p className="mb-4 text-gray-700 font-medium">3. 準備好開始了嗎？</p>
+              <button onClick={() => handleUpdateLiveSettings({...editLiveSettings, isLive: !editLiveSettings.isLive})} className={`w-full max-w-xs py-3 rounded-full font-bold text-lg transition-all shadow-md flex items-center justify-center gap-2 ${editLiveSettings.isLive ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'bg-gray-800 hover:bg-gray-700 text-white'}`}>
+                {editLiveSettings.isLive ? <><span className="w-3 h-3 bg-white rounded-full"></span> 關閉直播狀態</> : <><MonitorPlay size={20} /> 發佈並開啟直播室</>}
+              </button>
+              <p className="text-xs text-gray-500 mt-4">點擊後，所有在線學生的畫面上會立刻出現「直播中」的紅燈提示！</p>
+           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-4 flex justify-between items-end border-b border-gray-200 pb-2">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Users className="text-cyan-600" /> 學員權限管理
+            </h2>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-gray-200 text-gray-600 text-sm">
+                  <th className="p-4 font-semibold">學員名稱 / Email</th>
+                  <th className="p-4 font-semibold text-center w-1/4">粗細轉折的奧義</th>
+                  <th className="p-4 font-semibold text-center w-1/4">轉折天機</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {studentsList.map(student => (
+                  <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <div className="font-medium text-gray-900">{student.name}</div>
+                      <div className="text-sm text-gray-500">{student.email}</div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <button onClick={() => toggleStudentCourse(student.id, 'course_kline_1')} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${student.purchasedCourses.includes('course_kline_1') ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                        {student.purchasedCourses.includes('course_kline_1') ? <><ToggleRight size={18} className="text-green-600"/> 已開通</> : <><ToggleLeft size={18} /> 未開通</>}
+                      </button>
+                    </td>
+                    <td className="p-4 text-center">
+                      <button onClick={() => toggleStudentCourse(student.id, 'course_tankey_2')} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${student.purchasedCourses.includes('course_tankey_2') ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                        {student.purchasedCourses.includes('course_tankey_2') ? <><ToggleRight size={18} className="text-green-600"/> 已開通</> : <><ToggleLeft size={18} /> 未開通</>}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  )}
+
+  {currentView === 'live' && (
     <main className="flex-grow max-w-6xl mx-auto w-full px-4 py-8">
       <div className="mb-6 flex justify-between items-end border-b border-gray-200 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Users className="text-cyan-600" /> 學員權限管理系統
+             <MonitorPlay className="text-red-500"/> {liveSettings.title || '專屬直播室'}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">點擊按鈕即可即時開通學員權限</p>
+          <p className="text-gray-500 text-sm mt-1">在這裡與老師進行線上即時互動</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-gray-200 text-gray-600 text-sm">
-                <th className="p-4 font-semibold">學員名稱 / Email</th>
-                <th className="p-4 font-semibold text-center w-1/4">課程一：粗細轉折的奧義</th>
-                <th className="p-4 font-semibold text-center w-1/4">課程二：轉折天機</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {studentsList.map(student => (
-                <tr key={student.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-4">
-                    <div className="font-medium text-gray-900">{student.name}</div>
-                    <div className="text-sm text-gray-500">{student.email}</div>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button onClick={() => toggleStudentCourse(student.id, 'course_kline_1')} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${student.purchasedCourses.includes('course_kline_1') ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                      {student.purchasedCourses.includes('course_kline_1') ? <><ToggleRight size={18} className="text-green-600"/> 已開通</> : <><ToggleLeft size={18} /> 未開通</>}
-                    </button>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button onClick={() => toggleStudentCourse(student.id, 'course_tankey_2')} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${student.purchasedCourses.includes('course_tankey_2') ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                      {student.purchasedCourses.includes('course_tankey_2') ? <><ToggleRight size={18} className="text-green-600"/> 已開通</> : <><ToggleLeft size={18} /> 未開通</>}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {studentsList.length === 0 && (
-                 <tr><td colSpan="3" className="p-8 text-center text-gray-500">目前還沒有學生註冊登入</td></tr>
-              )}
-            </tbody>
-          </table>
+      {liveSettings.isLive ? (
+        <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)] min-h-[500px]">
+           <div className="flex-grow bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
+              <iframe 
+                className="w-full h-full" 
+                src={`https://www.youtube.com/embed/${liveSettings.videoId}?autoplay=1&rel=0`} 
+                title="YouTube video player" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              ></iframe>
+           </div>
+           <div className="w-full lg:w-[400px] h-[400px] lg:h-full bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+              <div className="p-3 bg-slate-50 border-b border-gray-200 font-bold text-gray-700 flex items-center gap-2">
+                 <span>💬 即時聊天室</span>
+              </div>
+              <iframe 
+                className="w-full flex-grow" 
+                src={`https://www.youtube.com/live_chat?v=${liveSettings.videoId}&embed_domain=${window.location.hostname}`} 
+                frameBorder="0"
+              ></iframe>
+           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 flex flex-col items-center justify-center text-center mt-10">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 relative">
+             <MonitorPlay size={48} className="text-gray-400" />
+             <span className="absolute top-0 right-0 w-6 h-6 bg-gray-300 border-4 border-white rounded-full"></span>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-700 mb-2">目前沒有直播放送中</h3>
+          <p className="text-gray-500 max-w-md">請留意官方社群或 LINE 群組的直播時間公告。<br/>當老師開啟直播時，此頁面會自動切換為直播畫面！</p>
+        </div>
+      )}
     </main>
   )}
 
   {currentView === 'home' && (
     <main className="flex-grow max-w-6xl mx-auto w-full px-4 py-8">
       <div className="mb-6 flex justify-between items-end border-b border-gray-200 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">我的課程庫</h1>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">我的課程庫</h1>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {COURSES_DB.map(course => {
           const purchased = hasPurchased(course.id) || isAdmin;
@@ -431,20 +446,11 @@ KDrawCourse
   )}
 
   {/* LINE 官方按鈕 */}
-  <a 
-    href="https://lin.ee/NZmWvUM" 
-    target="_blank" 
-    rel="noopener noreferrer"
-    className="fixed bottom-6 right-6 z-50 bg-[#06C755] hover:bg-[#05b34c] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
-    title="加入官方 LINE 聯繫我們"
-  >
-    <img 
-      src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" 
-      alt="LINE" 
-      className="w-8 h-8"
-    />
+  <a href="https://lin.ee/NZmWvUM" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-50 bg-[#06C755] hover:bg-[#05b34c] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" className="w-8 h-8"/>
   </a>
 </div>
+
 
 
 );
