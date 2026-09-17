@@ -1,0 +1,36 @@
+{
+  "name": "kdrawcourse-platform",
+  "base": "/kdrawcourse-platform/",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DCFDATA-KLDRAWING/kdrawcourse-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DCFDATA-KLDRAWING/kdrawcourse-platform/issues"
+  },
+  "homepage": "https://github.com/DCFDATA-KLDRAWING/kdrawcourse-platform#readme",
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "lucide-react": "^1.46.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.3.0"
+  }
+}
