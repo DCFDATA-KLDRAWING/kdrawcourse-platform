@@ -1,8 +1,22 @@
-- name: 安裝 Node.js
-  uses: actions/setup-node@v4
-  with:
-    node-version: 18
-    cache: 'npm'
+name: 自動發佈到 GitHub Pages
+
+on:
+push:
+branches:
+- main
+
+jobs:
+build-and-deploy:
+runs-on: ubuntu-latest
+steps:
+- name: 下載原始碼
+uses: actions/checkout@v4
+
+  - name: 安裝 Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 18
+      cache: 'npm'
 
   - name: 安裝工具套件
     run: npm install
