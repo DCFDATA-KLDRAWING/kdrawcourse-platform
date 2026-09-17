@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+# 👇 關鍵新增：直接在這裡發給機器人「寫入/發佈」的權限徽章
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
