@@ -419,7 +419,8 @@ export default function App() {
             <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-250px)] min-h-[500px]">
                {/* 左側：直播影像 */}
                <div className="flex-grow bg-black rounded-xl overflow-hidden shadow-lg border border-gray-800">
-                  <iframe 
+                  <iframe
+                    key={liveSettings.videoId} 
                     className="w-full h-full" 
                     src={`https://www.youtube.com/embed/${liveSettings.videoId}?autoplay=1&rel=0`} 
                     title="YouTube video player" 
@@ -434,7 +435,8 @@ export default function App() {
                      <span>💬 即時聊天室</span>
                   </div>
                   {/* 注意：YouTube 聊天室需要提供目前的網域 (hostname) */}
-                  <iframe 
+                  <iframe
+                    key={`chat-${liveSettings.videoId}`} 
                     className="w-full flex-grow" 
                     src={`https://www.youtube.com/live_chat?v=${liveSettings.videoId}&embed_domain=${window.location.hostname}`} 
                     frameBorder="0"
