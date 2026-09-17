@@ -1,0 +1,25 @@
+# 1. 機器人去保險箱拿出你的程式碼
+  - name: 下載原始碼
+    uses: actions/checkout@v4
+
+  # 2. 機器人準備 Node.js 環境
+  - name: 安裝 Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 18
+      cache: 'npm'
+
+  # 3. 機器人幫你安裝所有套件 (等同於 npm install)
+  - name: 安裝工具套件
+    run: npm install
+
+  # 4. 機器人幫你打包專案 (等同於 npm run build)
+  - name: 打包編譯網站
+    run: npm run build
+
+  # 5. 機器人幫你把打包好的網站推送到展示店面 (gh-pages)
+  - name: 發佈到 GitHub Pages
+    uses: peaceiris/actions-gh-pages@v3
+    with:
+      github_token: ${{ secrets.GITHUB_TOKEN }}
+      publish_dir: ./dist
