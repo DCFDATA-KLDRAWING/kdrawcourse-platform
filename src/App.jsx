@@ -4,7 +4,7 @@ import { PlayCircle, Lock, BookOpen, LogOut, MonitorPlay, ChevronLeft, ListVideo
 // === Firebase 雲端資料套件 ===
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot, addDoc } from "firebase/firestore";
 
 // === 你的 Firebase 專屬鑰匙 ===
 const firebaseConfig = {
@@ -96,6 +96,10 @@ export default function App() {
   const [viewingCourse, setViewingCourse] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [studentsList, setStudentsList] = useState([]);
+  // --- 新增：直播回放相關狀態 ---
+  const [vods, setVods] = useState([]); 
+  const [newVod, setNewVod] = useState({ title: '', videoId: '', courseId: 'course_kline_1' });
+  const [isSubmittingVod, setIsSubmittingVod] = useState(false);
 
   const [liveSettings, setLiveSettings] = useState({ isLive: false, videoId: '', title: 'KDraw 專屬直播' });
   const [editLiveSettings, setEditLiveSettings] = useState({ isLive: false, videoId: '', title: 'KDraw 專屬直播' });
@@ -162,10 +166,19 @@ export default function App() {
         setEditLiveSettings(defaultSettings);
       }
     });
+    // 🟢 新增：監聽「直播回放」資料庫
+    const unsubscribeVods = onSnapshot(collection(db, "vods"), (snapshot) => {
+      const vodData = [];
+      snapshot.forEach(doc => vodData.push({ id: doc.id, ...doc.data() }));
+      // 照時間新到舊排序
+      vodData.sort((a, b) => b.createdAt - a.createdAt);
+      setVods(vodData);
+    });
 
     return () => {
       unsubscribeAuth();
       unsubscribeLive();
+      unsubscribeVods(); // 新增這行關閉監聽
     };
   }, []);
 
@@ -220,7 +233,28 @@ export default function App() {
       alert("更新失敗，請檢查資料庫連線。");
     }
   };
-
+  
+  // 👇👇👇 第四步的程式碼貼在這裡 👇👇👇
+  // 🟢 新增：將直播存入課程回放區
+  const handleArchiveVod = async () => {
+    if (!newVod.title || !newVod.videoId) {
+      alert("請填寫標題與影片 ID");
+      return;
+    }
+    setIsSubmittingVod(true);
+    try {
+      await addDoc(collection(db, "vods"), {
+        ...newVod,
+        createdAt: Date.now()
+      });
+      alert("✅ 成功歸檔！學員現在可以在該課程的「直播專區」看到此回放。");
+      setNewVod({ title: '', videoId: '', courseId: 'course_kline_1' }); // 清空表單
+    } catch (error) {
+      console.error(error);
+      alert("儲存失敗，請檢查連線。");
+    }
+    setIsSubmittingVod(false);
+  };
   const hasPurchased = (courseId) => user?.purchasedCourses.includes(courseId);
 
   const handleEnterCourse = (course) => {
@@ -352,6 +386,44 @@ export default function App() {
                     {editLiveSettings.isLive ? <><span className="w-3 h-3 bg-white rounded-full"></span> 關閉直播狀態</> : <><MonitorPlay size={20} /> 發佈並開啟直播室</>}
                   </button>
                   <p className="text-xs text-gray-500 mt-4">點擊後，所有在線學生的畫面上會立刻出現「直播中」的紅燈提示！</p>
+               </div>
+            </div>
+          </section>
+          
+          {/* 🟢 新增：直播回放歸檔區 */}
+          <section className="mt-8">
+            <div className="mb-4 flex justify-between items-end border-b border-gray-200 pb-2">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <BookOpen className="text-cyan-600" /> 直播回放歸檔設定
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">直播結束後，將影片轉為非公開，並在這裡加入課程專區</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row gap-6">
+               <div className="flex-1 space-y-4">
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">回放影片名稱</label>
+                     <input type="text" value={newVod.title} onChange={e => setNewVod({...newVod, title: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="例如：2026/09/18 實戰解析與QA" />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">影片 ID</label>
+                     <input type="text" value={newVod.videoId} onChange={e => setNewVod({...newVod, videoId: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none font-mono" placeholder="例如: jx_JT0mFIMw" />
+                  </div>
+               </div>
+               <div className="flex-1 space-y-4 flex flex-col justify-between">
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">選擇歸檔課程</label>
+                     <select value={newVod.courseId} onChange={e => setNewVod({...newVod, courseId: e.target.value})} className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none bg-slate-50">
+                       <option value="course_kline_1">粗細轉折的奧義</option>
+                       <option value="course_tankey_2">轉折天機</option>
+                     </select>
+                  </div>
+                  <div className="pt-2">
+                     <button onClick={handleArchiveVod} disabled={isSubmittingVod} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-bold transition-colors">
+                       {isSubmittingVod ? '儲存中...' : '➕ 將影片加入到所選課程中'}
+                     </button>
+                  </div>
                </div>
             </div>
           </section>
@@ -523,26 +595,54 @@ export default function App() {
             <div className="p-4 bg-slate-50 border-b border-gray-200 flex items-center gap-2">
               <ListVideo className="text-cyan-600" size={20} /><h3 className="font-bold text-gray-800">課程章節</h3>
             </div>
+            
+            {/* 👇👇👇 第六步：動態組裝直播回放區 👇👇👇 */}
             <div className="overflow-y-auto flex-grow pb-10">
-              {viewingCourse.chapters.map((chapter) => (
-                <div key={chapter.id} className="border-b border-gray-100 last:border-0">
-                  <div className="bg-gray-50 px-4 py-3 font-bold text-gray-700 text-sm border-l-2 border-slate-300">{chapter.title}</div>
-                  <ul className="flex flex-col">
-                    {chapter.lessons.map(lesson => {
-                      const isPlaying = currentLesson?.id === lesson.id;
-                      return (
-                        <li key={lesson.id}>
-                          <button onClick={() => setCurrentLesson(lesson)} className={`w-full text-left px-4 py-3 flex gap-3 items-start transition-colors duration-200 ${isPlaying ? 'bg-cyan-50 border-l-4 border-cyan-500' : 'border-l-4 border-transparent hover:bg-gray-50'}`}>
-                            <div className="mt-0.5">{isPlaying ? <Play size={16} className="text-cyan-600 fill-cyan-600" /> : <PlayCircle size={16} className="text-gray-400" />}</div>
-                            <div><div className={`text-sm ${isPlaying ? 'font-bold text-cyan-800' : 'text-gray-700'}`}>{lesson.title}</div></div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
+              {(() => {
+                // 1. 抓出屬於這個課程的直播回放
+                const courseVods = vods.filter(v => v.courseId === viewingCourse.id);
+                // 2. 複製原本寫死的章節
+                const dynamicChapters = [...viewingCourse.chapters];
+                
+                // 3. 如果有回放，就在最後面生出一個「直播專區」
+                if (courseVods.length > 0) {
+                  dynamicChapters.push({
+                    id: 'chapter_live_vods',
+                    title: '🔴 直播專區 (回放)',
+                    lessons: courseVods.map((v, index) => ({
+                      id: v.id,
+                      title: v.title,
+                      duration: `回放 ${index + 1}`,
+                      videoEmbedId: v.videoId
+                    }))
+                  });
+                }
+                
+                // 4. 把合併好的章節畫到畫面上
+                return dynamicChapters.map((chapter) => (
+                  <div key={chapter.id} className="border-b border-gray-100 last:border-0">
+                    <div className={`px-4 py-3 font-bold text-sm border-l-2 ${chapter.id === 'chapter_live_vods' ? 'bg-red-50 text-red-700 border-red-400' : 'bg-gray-50 text-gray-700 border-slate-300'}`}>
+                      {chapter.title}
+                    </div>
+                    <ul className="flex flex-col">
+                      {chapter.lessons.map(lesson => {
+                        const isPlaying = currentLesson?.id === lesson.id;
+                        return (
+                          <li key={lesson.id}>
+                            <button onClick={() => setCurrentLesson(lesson)} className={`w-full text-left px-4 py-3 flex gap-3 items-start transition-colors duration-200 ${isPlaying ? 'bg-cyan-50 border-l-4 border-cyan-500' : 'border-l-4 border-transparent hover:bg-gray-50'}`}>
+                              <div className="mt-0.5">{isPlaying ? <Play size={16} className="text-cyan-600 fill-cyan-600" /> : <PlayCircle size={16} className="text-gray-400" />}</div>
+                              <div><div className={`text-sm ${isPlaying ? 'font-bold text-cyan-800' : 'text-gray-700'}`}>{lesson.title}</div></div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ));
+              })()}
             </div>
+            {/* 👆👆👆 第六步結束 👆👆👆 */}
+            
           </div>
         </div>
       )}
