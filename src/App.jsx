@@ -4,7 +4,7 @@ import { PlayCircle, Lock, BookOpen, LogOut, MonitorPlay, ChevronLeft, ListVideo
 // === Firebase 雲端資料套件 ===
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot, addDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 
 // === 你的 Firebase 專屬鑰匙 ===
 const firebaseConfig = {
@@ -255,6 +255,19 @@ export default function App() {
     }
     setIsSubmittingVod(false);
   };
+
+  // 🔴 刪除回放影片
+  const handleDeleteVod = async (vodId) => {
+    if (window.confirm("確定要刪除這筆直播回放嗎？刪除後學員將無法觀看。")) {
+      try {
+        await deleteDoc(doc(db, "vods", vodId));
+        alert("🗑️ 已成功刪除！");
+      } catch (error) {
+        console.error("刪除失敗:", error);
+        alert("刪除失敗，請檢查權限。");
+      }
+    }
+  };
   const hasPurchased = (courseId) => user?.purchasedCourses.includes(courseId);
 
   const handleEnterCourse = (course) => {
@@ -425,6 +438,37 @@ export default function App() {
                      </button>
                   </div>
                </div>
+            </div>
+            {/* 👇👇👇 新增：已上架的回放清單 👇👇👇 */}
+            <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+               <div className="bg-slate-50 p-4 border-b border-gray-200 font-bold text-gray-700">
+                 📋 已歸檔的回放影片管理
+               </div>
+               <ul className="divide-y divide-gray-100">
+                 {vods.length === 0 ? (
+                   <li className="p-6 text-gray-400 text-center">目前沒有任何回放影片</li>
+                 ) : (
+                   vods.map(vod => (
+                     <li key={vod.id} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-slate-50 transition-colors gap-4">
+                       <div>
+                         <div className="font-bold text-gray-800">{vod.title}</div>
+                         <div className="text-sm text-gray-500 mt-1">
+                           <span className="inline-block bg-gray-100 rounded px-2 py-0.5 mr-2">
+                             {vod.courseId === 'course_kline_1' ? '粗細轉折的奧義' : '轉折天機'}
+                           </span>
+                           影片 ID: <span className="font-mono">{vod.videoId}</span>
+                         </div>
+                       </div>
+                       <button
+                         onClick={() => handleDeleteVod(vod.id)}
+                         className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap"
+                       >
+                         刪除回放
+                       </button>
+                     </li>
+                   ))
+                 )}
+               </ul>
             </div>
           </section>
 
