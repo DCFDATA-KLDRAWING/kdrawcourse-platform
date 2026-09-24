@@ -71,6 +71,15 @@ const COURSES_DB = [
         id: 'tankey_ch_1',
         title: '單元一：轉折天機完整課程',
         lessons: [
+          // 👇 新增這筆圖文資料 (放在第一筆)
+          { 
+            id: 't_lesson_model', 
+            title: '📖 天機模型圖與核心說明', 
+            duration: '圖文', 
+            type: 'article', // 標記為圖文模式
+            imageUrl: '/model-map.jpg', // 👈 換成你真正的模型圖網址
+            content: '這是轉折天機的核心模型圖。\n\n當趨勢發生轉折時，請注意以下幾點：\n1. 觀察圖中的關鍵點位...\n2. 搭配 K 線的粗細變化...\n\n(這裡可以打上你想要的詳細說明，支援換行)' 
+          },
           { id: 't_lesson_1', title: '轉折天機', duration: '影片 1', videoEmbedId: '_eQjZ1XQA4g' },
           { id: 't_lesson_2', title: '天機模型速選法', duration: '影片 2', videoEmbedId: 'tu6BW8luOgY' },
           { id: 't_lesson_3', title: '轉折天機-趨勢定法', duration: '影片 3', videoEmbedId: 'cM5eFbJsyz8' },
@@ -622,11 +631,26 @@ export default function App() {
               <span className="text-gray-300">|</span>
               <h2 className="font-bold text-gray-800 line-clamp-1">{viewingCourse.title}</h2>
             </div>
-            <div className="bg-black w-full aspect-video relative">
+            {/* 👇👇👇 升級版：支援圖片與影片雙模式 👇👇👇 */}
+            <div className={`w-full ${currentLesson?.type === 'article' ? 'h-auto min-h-[50vh] bg-white border-b border-gray-200' : 'aspect-video bg-black relative'}`}>
               {currentLesson ? (
-                <iframe className="w-full h-full absolute inset-0" src={`https://www.youtube.com/embed/${currentLesson.videoEmbedId}?autoplay=1&rel=0`} title={currentLesson.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                currentLesson.type === 'article' ? (
+                  // 顯示圖文模式
+                  <div className="p-6 md:p-10 w-full h-full overflow-y-auto">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">{currentLesson.title}</h2>
+                    {currentLesson.imageUrl && (
+                      <img src={currentLesson.imageUrl} alt={currentLesson.title} className="max-w-full h-auto rounded-xl shadow-md mb-8 border border-gray-200 mx-auto" />
+                    )}
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap text-lg">
+                      {currentLesson.content}
+                    </div>
+                  </div>
+                ) : (
+                  // 顯示原本的 YouTube 影片模式
+                  <iframe className="w-full h-full absolute inset-0" src={`https://www.youtube.com/embed/${currentLesson.videoEmbedId}?autoplay=1&rel=0`} title={currentLesson.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                )
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">請從右側選單選擇要播放的單元</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-500 absolute inset-0">請從右側選單選擇要播放的單元</div>
               )}
             </div>
             <div className="p-6 flex-grow">
