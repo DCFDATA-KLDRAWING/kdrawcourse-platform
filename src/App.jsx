@@ -77,7 +77,7 @@ const COURSES_DB = [
             title: '📖 天機模型圖與核心說明', 
             duration: '圖文', 
             type: 'article', // 標記為圖文模式
-            imageUrl: '/model-map.jpg', // 👈 換成你真正的模型圖網址
+            imageUrl: 'https://i.ibb.co/FkPjM03z/model-map.jpg', // 👈 換成你真正的模型圖網址
             content: '這是轉折天機的核心模型圖。\n\n當趨勢發生轉折時，請注意以下幾點：\n1. 觀察圖中的關鍵點位...\n2. 搭配 K 線的粗細變化...\n\n(這裡可以打上你想要的詳細說明，支援換行)' 
           },
           { id: 't_lesson_1', title: '轉折天機', duration: '影片 1', videoEmbedId: '_eQjZ1XQA4g' },
